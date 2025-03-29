@@ -10,7 +10,7 @@ export function MoodChart({ moodSummary }: MoodChartProps) {
   const totalMoods = moodSummary.reduce((total, mood) => total + mood.value, 0);
 
   return (
-    <Card className="shadow-none border">
+    <Card className="shadow-none border relative" style={{ zIndex: 0 }}>
       <CardHeader>
         <CardTitle>Évolution des Humeurs</CardTitle>
       </CardHeader>
@@ -82,7 +82,11 @@ export function MoodChart({ moodSummary }: MoodChartProps) {
                     textAnchor="middle"
                     dominantBaseline="middle"
                     className="text-4xl focus:outline-none"
-                    style={{ outline: "none", userSelect: "none" }}
+                    style={{
+                      outline: "none",
+                      userSelect: "none",
+                      pointerEvents: "none",
+                    }}
                   >
                     {entry.emoji}
                   </text>
@@ -94,6 +98,13 @@ export function MoodChart({ moodSummary }: MoodChartProps) {
                   name,
                 ]}
                 labelFormatter={() => null}
+                contentStyle={{
+                  backgroundColor: "var(--background)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "0.5rem",
+                }}
+                cursor={{ fill: "rgba(0, 0, 0, 0.1)" }}
+                position={{ y: 0 }}
               />
             </PieChart>
           </ResponsiveContainer>

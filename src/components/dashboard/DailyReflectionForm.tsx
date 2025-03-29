@@ -1,4 +1,4 @@
-import { FormEvent } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { DatePicker } from "@/components/ui/date-picker";
 import { habits, moods } from "@/lib/constants";
+import { toast } from "sonner";
+import { Reflection } from "@/lib/reflection-utils";
 
 interface DailyReflectionFormProps {
   open: boolean;
@@ -27,6 +30,9 @@ interface DailyReflectionFormProps {
   selectedHabits: string[];
   onHabitToggle: (habitId: string) => void;
   onSubmit: (e: FormEvent) => void;
+  selectedDate: Date | undefined;
+  setSelectedDate: (date: Date | undefined) => void;
+  existingReflections: Reflection[];
 }
 
 export function DailyReflectionForm({
@@ -39,14 +45,57 @@ export function DailyReflectionForm({
   selectedHabits,
   onHabitToggle,
   onSubmit,
+  selectedDate,
+  setSelectedDate,
+  existingReflections,
 }: DailyReflectionFormProps) {
+  const [disabledDates, setDisabledDates] = useState<Date[]>([]);
+
+  useEffect(() => {
+    if (existingReflections && existingReflections.length > 0) {
+      const dates = existingReflections.map((r) => new Date(r.date));
+      setDisabledDates(dates);
+    }
+  }, [existingReflections]);
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedDate) {
+      toast.error("Veuillez sélectionner une date");
+      return;
+    }
+
+    if (!selectedMood) {
+      toast.error("Veuillez sélectionner votre humeur");
+      return;
+    }
+
+    if (!thoughts.trim()) {
+      toast.error("Veuillez partager vos pensées");
+      return;
+    }
+
+    onSubmit(e);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Nouvelle réflexion quotidienne</DialogTitle>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Label>Date de la réflexion</Label>
+            <DatePicker
+              date={selectedDate}
+              setDate={setSelectedDate}
+              disabledDates={disabledDates}
+              placeholder="Sélectionner une date"
+            />
+          </div>
+
           <div className="space-y-2">
             <Label>Comment vous sentez-vous aujourd'hui ?</Label>
             <div className="flex gap-4">
