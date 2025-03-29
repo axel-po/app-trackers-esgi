@@ -1,33 +1,33 @@
-import { useEffect, useState } from 'react';
-import { format, subDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useEffect, useState } from "react";
+import { format, subDays } from "date-fns";
+import { fr } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { toast } from 'sonner';
-import { useAuth } from '@/context/auth-context';
-import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+} from "@/components/ui/tooltip";
+import { toast } from "sonner";
+import { useAuth } from "@/context/auth-context";
+import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 const habits = [
-  { id: 'exercise', label: 'Exercice' },
-  { id: 'meditation', label: 'Méditation' },
-  { id: 'reading', label: 'Lecture' },
-  { id: 'healthy-eating', label: 'Alimentation saine' },
-  { id: 'sleep', label: 'Bon rythme de sommeil' },
+  { id: "exercise", label: "Exercice" },
+  { id: "meditation", label: "Méditation" },
+  { id: "reading", label: "Lecture" },
+  { id: "healthy-eating", label: "Alimentation saine" },
+  { id: "sleep", label: "Bon rythme de sommeil" },
 ];
 
 const moods = [
-  { emoji: '😔', label: 'Triste', value: 1, color: 'hsl(var(--chart-1))' },
-  { emoji: '😐', label: 'Neutre', value: 2, color: 'hsl(var(--chart-2))' },
-  { emoji: '😁', label: 'Heureux', value: 3, color: 'hsl(var(--chart-3))' },
+  { emoji: "😔", label: "Triste", value: 1, color: "hsl(var(--chart-1))" },
+  { emoji: "😐", label: "Neutre", value: 2, color: "hsl(var(--chart-2))" },
+  { emoji: "😁", label: "Heureux", value: 3, color: "hsl(var(--chart-3))" },
 ];
 
 interface Reflection {
@@ -40,22 +40,26 @@ interface Reflection {
 function prepareMoodData(reflections: Reflection[]) {
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const date = subDays(new Date(), i);
-    return format(date, 'yyyy-MM-dd');
+    return format(date, "yyyy-MM-dd");
   }).reverse();
 
-  const data = last7Days.map(date => {
-    const dayReflections = reflections.filter(r => 
-      format(new Date(r.date), 'yyyy-MM-dd') === date
+  const data = last7Days.map((date) => {
+    const dayReflections = reflections.filter(
+      (r) => format(new Date(r.date), "yyyy-MM-dd") === date
     );
 
-    const moodCounts = moods.reduce((acc, mood) => ({
-      ...acc,
-      [mood.label]: dayReflections.filter(r => r.mood === mood.label).length || 0
-    }), {});
+    const moodCounts = moods.reduce(
+      (acc, mood) => ({
+        ...acc,
+        [mood.label]:
+          dayReflections.filter((r) => r.mood === mood.label).length || 0,
+      }),
+      {}
+    );
 
     return {
-      date: format(new Date(date), 'dd/MM', { locale: fr }),
-      ...moodCounts
+      date: format(new Date(date), "dd/MM", { locale: fr }),
+      ...moodCounts,
     };
   });
 
@@ -65,9 +69,11 @@ function prepareMoodData(reflections: Reflection[]) {
 export function Dashboard() {
   const { user } = useAuth();
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [thoughts, setThoughts] = useState('');
+  const [thoughts, setThoughts] = useState("");
   const [selectedHabits, setSelectedHabits] = useState<string[]>([]);
-  const [previousReflections, setPreviousReflections] = useState<Reflection[]>([]);
+  const [previousReflections, setPreviousReflections] = useState<Reflection[]>(
+    []
+  );
   const [moodData, setMoodData] = useState<any[]>([]);
 
   useEffect(() => {
@@ -89,14 +95,14 @@ export function Dashboard() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedMood) {
-      toast.error('Veuillez sélectionner votre humeur');
+      toast.error("Veuillez sélectionner votre humeur");
       return;
     }
 
     if (!thoughts.trim()) {
-      toast.error('Veuillez partager vos pensées');
+      toast.error("Veuillez partager vos pensées");
       return;
     }
 
@@ -116,10 +122,10 @@ export function Dashboard() {
     setMoodData(prepareMoodData(updatedReflections));
 
     setSelectedMood(null);
-    setThoughts('');
+    setThoughts("");
     setSelectedHabits([]);
 
-    toast.success('Réflexion enregistrée avec succès');
+    toast.success("Réflexion enregistrée avec succès");
   };
 
   return (
@@ -138,7 +144,9 @@ export function Dashboard() {
                     <Tooltip key={label}>
                       <TooltipTrigger asChild>
                         <Button
-                          variant={selectedMood === label ? 'default' : 'outline'}
+                          variant={
+                            selectedMood === label ? "default" : "outline"
+                          }
                           className="text-2xl h-12 w-12"
                           onClick={() => setSelectedMood(label)}
                           type="button"
@@ -184,7 +192,10 @@ export function Dashboard() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full">
+            <Button
+              type="submit"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+            >
               Enregistrer la réflexion
             </Button>
           </form>
@@ -202,7 +213,7 @@ export function Dashboard() {
                 <AreaChart data={moodData}>
                   <XAxis dataKey="date" />
                   <YAxis />
-                  {moods.map(mood => (
+                  {moods.map((mood) => (
                     <Area
                       key={mood.label}
                       type="monotone"
@@ -216,7 +227,7 @@ export function Dashboard() {
               </ResponsiveContainer>
             </div>
             <div className="flex justify-center gap-4 mt-4">
-              {moods.map(mood => (
+              {moods.map((mood) => (
                 <div key={mood.label} className="flex items-center gap-2">
                   <div
                     className="w-3 h-3 rounded-full"
@@ -248,23 +259,30 @@ export function Dashboard() {
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-muted-foreground">
-                            {format(new Date(reflection.date), 'PPP', { locale: fr })}
+                            {format(new Date(reflection.date), "PPP", {
+                              locale: fr,
+                            })}
                           </span>
                           <span className="text-2xl">
-                            {moods.find(m => m.label === reflection.mood)?.emoji}
+                            {
+                              moods.find((m) => m.label === reflection.mood)
+                                ?.emoji
+                            }
                           </span>
                         </div>
                         <p className="text-sm">{reflection.thoughts}</p>
                         {reflection.habits.length > 0 && (
                           <div className="pt-2">
-                            <p className="text-sm font-medium mb-1">Habitudes :</p>
+                            <p className="text-sm font-medium mb-1">
+                              Habitudes :
+                            </p>
                             <div className="flex flex-wrap gap-2">
-                              {reflection.habits.map(habit => (
+                              {reflection.habits.map((habit) => (
                                 <span
                                   key={habit}
                                   className="text-xs bg-secondary px-2 py-1 rounded-md"
                                 >
-                                  {habits.find(h => h.id === habit)?.label}
+                                  {habits.find((h) => h.id === habit)?.label}
                                 </span>
                               ))}
                             </div>

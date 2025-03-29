@@ -2,6 +2,7 @@ import { BrainCircuit } from "lucide-react";
 import { Link, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function DashboardLayout() {
   const { logout } = useAuth();
@@ -15,9 +16,16 @@ export function DashboardLayout() {
               <BrainCircuit className="h-6 w-6" />
               <span className="text-lg font-semibold">App trackers</span>
             </Link>
-            <Button variant="ghost" onClick={logout}>
-              Déconnexion
-            </Button>
+            <div className="flex items-center space-x-2">
+              <ThemeToggle />
+              <Button
+                variant="outline"
+                onClick={logout}
+                className="hover:bg-primary hover:text-primary-foreground"
+              >
+                Déconnexion
+              </Button>
+            </div>
           </nav>
         </div>
       </header>
