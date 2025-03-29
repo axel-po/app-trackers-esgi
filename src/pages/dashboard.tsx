@@ -1,70 +1,21 @@
 import { useEffect, useState } from "react";
-import { format, subDays } from "date-fns";
-import { fr } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { PlusIcon } from "@radix-ui/react-icons";
 import { toast } from "sonner";
 import { useAuth } from "@/context/auth-context";
-import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
-const habits = [
-  { id: "exercise", label: "Exercice" },
-  { id: "meditation", label: "Méditation" },
-  { id: "reading", label: "Lecture" },
-  { id: "healthy-eating", label: "Alimentation saine" },
-  { id: "sleep", label: "Bon rythme de sommeil" },
-];
-
-const moods = [
-  { emoji: "😔", label: "Triste", value: 1, color: "hsl(var(--chart-1))" },
-  { emoji: "😐", label: "Neutre", value: 2, color: "hsl(var(--chart-2))" },
-  { emoji: "😁", label: "Heureux", value: 3, color: "hsl(var(--chart-3))" },
-];
-
-interface Reflection {
-  date: string;
-  mood: string | null;
-  thoughts: string;
-  habits: string[];
-}
-
-function prepareMoodData(reflections: Reflection[]) {
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = subDays(new Date(), i);
-    return format(date, "yyyy-MM-dd");
-  }).reverse();
-
-  const data = last7Days.map((date) => {
-    const dayReflections = reflections.filter(
-      (r) => format(new Date(r.date), "yyyy-MM-dd") === date
-    );
-
-    const moodCounts = moods.reduce(
-      (acc, mood) => ({
-        ...acc,
-        [mood.label]:
-          dayReflections.filter((r) => r.mood === mood.label).length || 0,
-      }),
-      {}
-    );
-
-    return {
-      date: format(new Date(date), "dd/MM", { locale: fr }),
-      ...moodCounts,
-    };
-  });
-
-  return data;
-}
+import { DailyReflectionForm } from "@/components/dashboard/DailyReflectionForm";
+import { ReflectionsList } from "@/components/dashboard/ReflectionsList";
+import { MoodChart } from "@/components/dashboard/MoodChart";
+import { HabitTracker } from "@/components/dashboard/HabitTracker";
+import { habits, moods } from "@/lib/constants";
+import {
+  Reflection,
+  MoodSummary,
+  HabitSummary,
+  prepareMoodSummary,
+  prepareHabitSummary,
+} from "@/lib/reflection-utils";
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -74,14 +25,21 @@ export function Dashboard() {
   const [previousReflections, setPreviousReflections] = useState<Reflection[]>(
     []
   );
-  const [moodData, setMoodData] = useState<any[]>([]);
+  const [moodSummary, setMoodSummary] = useState<MoodSummary[]>([]);
+  const [habitSummary, setHabitSummary] = useState<HabitSummary[]>([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingReflectionIndex, setEditingReflectionIndex] = useState<
+    number | null
+  >(null);
+  const [editingHabits, setEditingHabits] = useState<string[]>([]);
 
   useEffect(() => {
     const stored = localStorage.getItem(`reflections-${user?.id}`);
     if (stored) {
       const reflections = JSON.parse(stored);
       setPreviousReflections(reflections);
-      setMoodData(prepareMoodData(reflections));
+      setMoodSummary(prepareMoodSummary(reflections, moods));
+      setHabitSummary(prepareHabitSummary(reflections, habits));
     }
   }, [user?.id]);
 
@@ -119,184 +77,104 @@ export function Dashboard() {
       JSON.stringify(updatedReflections)
     );
     setPreviousReflections(updatedReflections);
-    setMoodData(prepareMoodData(updatedReflections));
+    setMoodSummary(prepareMoodSummary(updatedReflections, moods));
+    setHabitSummary(prepareHabitSummary(updatedReflections, habits));
 
     setSelectedMood(null);
     setThoughts("");
     setSelectedHabits([]);
+    setDialogOpen(false);
 
     toast.success("Réflexion enregistrée avec succès");
   };
 
+  const openHabitsDialog = (reflectionIndex: number) => {
+    const reflection = previousReflections[reflectionIndex];
+    setEditingReflectionIndex(reflectionIndex);
+    setEditingHabits([...reflection.habits]);
+  };
+
+  const handleHabitEditToggle = (habitId: string) => {
+    setEditingHabits((current) =>
+      current.includes(habitId)
+        ? current.filter((id) => id !== habitId)
+        : [...current, habitId]
+    );
+  };
+
+  const saveHabitsChanges = () => {
+    if (editingReflectionIndex === null) return;
+
+    setPreviousReflections((current) => {
+      const updatedReflections = [...current];
+      updatedReflections[editingReflectionIndex].habits = [...editingHabits];
+
+      localStorage.setItem(
+        `reflections-${user?.id}`,
+        JSON.stringify(updatedReflections)
+      );
+
+      setMoodSummary(prepareMoodSummary(updatedReflections, moods));
+      setHabitSummary(prepareHabitSummary(updatedReflections, habits));
+
+      return updatedReflections;
+    });
+
+    setEditingReflectionIndex(null);
+    toast.success("Habitudes mises à jour avec succès");
+  };
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Réflexion Quotidienne</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label>Comment vous sentez-vous aujourd'hui ?</Label>
-              <div className="flex gap-4">
-                <TooltipProvider>
-                  {moods.map(({ emoji, label }) => (
-                    <Tooltip key={label}>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant={
-                            selectedMood === label ? "default" : "outline"
-                          }
-                          className="text-2xl h-12 w-12"
-                          onClick={() => setSelectedMood(label)}
-                          type="button"
-                        >
-                          {emoji}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{label}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                </TooltipProvider>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="thoughts">Partagez vos pensées</Label>
-              <Textarea
-                id="thoughts"
-                placeholder="Qu'avez-vous en tête aujourd'hui ?"
-                value={thoughts}
-                onChange={(e) => setThoughts(e.target.value)}
-                className="min-h-[100px]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Habitudes Quotidiennes</Label>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {habits.map(({ id, label }) => (
-                  <div key={id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={id}
-                      checked={selectedHabits.includes(id)}
-                      onCheckedChange={() => handleHabitToggle(id)}
-                    />
-                    <Label htmlFor={id} className="text-sm font-normal">
-                      {label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
+    <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <h1 className="text-2xl font-bold mb-2">
+            Bonjour {user?.email ? user.email.split("@")[0] : "Axel"} 👋
+          </h1>
+          <p className="text-muted-foreground">
+            {new Date().toLocaleDateString("fr-FR", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+          <div className="mt-4">
             <Button
-              type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+              size="sm"
+              className="h-9"
+              onClick={() => setDialogOpen(true)}
             >
-              Enregistrer la réflexion
+              <PlusIcon className="h-4 w-4 mr-1" /> Ajouter
             </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Évolution des Humeurs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={moodData}>
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  {moods.map((mood) => (
-                    <Area
-                      key={mood.label}
-                      type="monotone"
-                      dataKey={mood.label}
-                      stackId="1"
-                      stroke={mood.color}
-                      fill={mood.color}
-                    />
-                  ))}
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex justify-center gap-4 mt-4">
-              {moods.map((mood) => (
-                <div key={mood.label} className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: mood.color }}
-                  />
-                  <span className="text-sm">
-                    {mood.emoji} {mood.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Réflexions Précédentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {previousReflections.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">
-                  Pas encore de réflexions. Commencez par en ajouter une !
-                </p>
-              ) : (
-                previousReflections.map((reflection, index) => (
-                  <Card key={index}>
-                    <CardContent className="pt-6">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">
-                            {format(new Date(reflection.date), "PPP", {
-                              locale: fr,
-                            })}
-                          </span>
-                          <span className="text-2xl">
-                            {
-                              moods.find((m) => m.label === reflection.mood)
-                                ?.emoji
-                            }
-                          </span>
-                        </div>
-                        <p className="text-sm">{reflection.thoughts}</p>
-                        {reflection.habits.length > 0 && (
-                          <div className="pt-2">
-                            <p className="text-sm font-medium mb-1">
-                              Habitudes :
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {reflection.habits.map((habit) => (
-                                <span
-                                  key={habit}
-                                  className="text-xs bg-secondary px-2 py-1 rounded-md"
-                                >
-                                  {habits.find((h) => h.id === habit)?.label}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
+
+      <ReflectionsList
+        reflections={previousReflections}
+        editingHabits={editingHabits}
+        onOpenHabitsDialog={openHabitsDialog}
+        onHabitEditToggle={handleHabitEditToggle}
+        onSaveHabits={saveHabitsChanges}
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <MoodChart moodSummary={moodSummary} />
+        <HabitTracker habitSummary={habitSummary} />
+      </div>
+
+      <DailyReflectionForm
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        selectedMood={selectedMood}
+        setSelectedMood={setSelectedMood}
+        thoughts={thoughts}
+        setThoughts={setThoughts}
+        selectedHabits={selectedHabits}
+        onHabitToggle={handleHabitToggle}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 }
