@@ -13,7 +13,7 @@ import { useReflectionForm } from "@/hooks/use-reflection-form";
 
 export function Dashboard() {
   const { user } = useAuth();
-  const username = user?.email ? user.email.split("@")[0] : "Axel";
+  const username = user?.user?.email || "";
   const formattedDate = new Date().toLocaleDateString("fr-FR", {
     weekday: "long",
     year: "numeric",
