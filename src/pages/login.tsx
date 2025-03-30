@@ -22,8 +22,9 @@ export function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     try {
-      await login(email, password);
+      await login(email);
       navigate("/");
     } catch (error) {
       toast.error("Échec de la connexion");
