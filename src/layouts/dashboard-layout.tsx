@@ -14,7 +14,7 @@ export function DashboardLayout() {
           <nav className="flex h-16 items-center justify-between w-full">
             <Link to="/" className="flex items-center space-x-2">
               <BrainCircuit className="h-6 w-6" />
-              <span className="text-lg font-semibold">App trackers</span>
+              <span className="text-lg font-semibold">MindTrack</span>
             </Link>
             <div className="flex items-center space-x-2">
               <ThemeToggle />

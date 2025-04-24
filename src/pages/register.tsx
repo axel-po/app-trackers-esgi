@@ -36,7 +36,7 @@ export function Register() {
       <CardHeader className="space-y-1">
         <div className="flex items-center justify-center space-x-2">
           <BrainCircuit className="h-8 w-8" />
-          <CardTitle className="text-2xl">App trackers</CardTitle>
+          <CardTitle className="text-2xl">MindTrack</CardTitle>
         </div>
         <CardDescription className="text-center">
           Créez un compte pour commencer

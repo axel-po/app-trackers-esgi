@@ -22,8 +22,8 @@ export function Footer({ onResetData, onDeleteAllData }: FooterProps) {
     <footer className="border-t pt-6 mt-6">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="text-sm text-muted-foreground">
-          © {new Date().getFullYear()} - App Trackers - Projet ESGI M1 created
-          by Axel Pointud, Maël Fantova, Théo Hanse, Eloïck Mickisz
+          © {new Date().getFullYear()} - MindTrack - Projet ESGI M1 created by
+          Axel Pointud, Maël Fantova, Théo Hanse, Eloïck Mickisz
         </div>
 
         <div className="flex gap-2">

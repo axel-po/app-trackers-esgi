@@ -36,7 +36,7 @@ export function Login() {
       <CardHeader className="space-y-1">
         <div className="flex items-center justify-center space-x-2">
           <BrainCircuit className="h-8 w-8" />
-          <CardTitle className="text-2xl">App trackers</CardTitle>
+          <CardTitle className="text-2xl">MindTrack</CardTitle>
         </div>
         <CardDescription className="text-center">
           Connectez-vous à votre compte pour continuer
